@@ -102,6 +102,7 @@ DWORD RunEngine()
 {
 	while (!(*done))
 	{
+		GUI_Message(TEXT("Idle     "), 10);
 		sendClear = FALSE;
 
 		if (OutputAvailable())
@@ -129,6 +130,7 @@ DWORD RunEngine()
 				{
 					// ENQ received had no ack.
 					// ENQ collision. Rand Wait
+					GUI_Message(TEXT("ENQ collision"), 13);
 					signal = WaitForSingleObject(allEvents[0], rand() % (TIMEOUT * 2));
 					if (signal == WAIT_OBJECT_0)
 						SetEvent(allEvents[0]);
@@ -165,6 +167,7 @@ DWORD Active()
 {
 	BOOL resend = FALSE;
 	BOOL reAck = TRUE;
+	BOOL myEOT = FALSE;
 	retries = 0;
 	timeouts = 0;
 	
@@ -174,22 +177,25 @@ DWORD Active()
 
 		if (sendClear && (OutputAvailable() || resend)) // data to send or resend
 		{
+			GUI_Message(TEXT("Sending  "), 10);
 			if (resend)
 				Resend(reAck);
 			else if (OutputAvailable())
 				SendNext(reAck);
 
+			myEOT = FALSE;
 			GUI_Sent();
 		}
 		else if (sendClear)	// clear to send, but no data to send or resend.
 		{
+			SendEOT(reAck);
 			if (teardownReady)
 				return 0;	// other side just EOT'd. Transmission done
-			SendEOT(reAck);
+			myEOT = TRUE;
 		}
 
 		// ------------WAIT FOR REPLY--------------------
-
+		GUI_Message(TEXT("Receiving "), 10);
 		int signaled = WaitForMultipleObjects(2, &allEvents[3], FALSE, TIMEOUT);	// Wait: ACK/NAK
 		switch (signaled)
 		{
@@ -198,6 +204,7 @@ DWORD Active()
 			break;
 
 		case WAIT_TIMEOUT:	//Timeout
+			GUI_Message(TEXT("Rx Timeout"), 10);
 			if (++timeouts == 5)
 				return 2;
 			// fall through
@@ -235,6 +242,8 @@ DWORD Active()
 		case WAIT_OBJECT_0 + 2: // EOT/No data
 			reAck = TRUE;
 			teardownReady = TRUE;
+			if (myEOT)
+				return 0;
 			break;
 		}
 

@@ -245,3 +245,11 @@ VOID GUI_ReceivedBad()
 	++badReceived;
 	update();
 }
+
+VOID GUI_Message(TCHAR* text, unsigned len)
+{
+	len = (len > 35) ? 35 : len;
+	HDC hdc = GetDC(hwndMainWin);
+	TextOut(hdc, 410, 500, text, len);
+	ReleaseDC(hwndMainWin, hdc);
+}

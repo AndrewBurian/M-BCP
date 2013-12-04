@@ -103,8 +103,7 @@ VOID GUI_Sent();
 VOID GUI_Received();
 VOID GUI_ReceivedBad();
 VOID GUI_Lost();
-
-VOID Debug_out(TCHAR* text, size_t len);
+VOID GUI_Message(TCHAR* text, unsigned len)
 
 // Choose File popup
 // ----------------------------------------------------------------------------
